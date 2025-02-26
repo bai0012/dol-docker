@@ -10,8 +10,12 @@ def download_mods():
     with open('mods.csv') as f:
         reader = csv.reader(f)
         for row in reader:
+            if len(row) < 2:
+                print(f"Skipping incomplete row: {row}")
+                continue
+            
             repo, keyword = row
-            api_url = f"https://api.github.com/repos{repo.split('github.com')[-1]}/releases/latest"
+            api_url = f"https://api.github.com/repos/{repo}/releases/latest"
             response = requests.get(api_url)
             
             if response.status_code != 200:
