@@ -16,13 +16,13 @@ def download_mods():
             
             if response.status_code != 200:
                 print(f"Failed to fetch release info for {repo}. Status code: {response.status_code}")
-                print(response.text)
+                print(f"Response content: {response.text}")
                 continue
             
             release = response.json()
             
             if 'assets' not in release:
-                print(f"No assets found in the latest release of {repo}. Response: {release}")
+                print(f"No assets found in the release for {repo}. Response content: {release}")
                 continue
             
             asset = next(
@@ -40,7 +40,7 @@ def download_mods():
                         for chunk in r.iter_content(chunk_size=8192):
                             f.write(chunk)
             else:
-                print(f"No matching asset found for keyword '{keyword}' in the latest release of {repo}.")
+                print(f"No matching asset found for keyword '{keyword}' in the release of {repo}")
 
 if __name__ == "__main__":
     download_mods()
