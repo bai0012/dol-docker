@@ -1,0 +1,75 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install requests pandas
+
+    - name: Download ModLoader
+      run: |
+        mkdir -p apps
+        curl -s https://api.github.com/repos/Lyoko-Jeremie/DoLModLoaderBuild/releases/latest | 
+        grep "browser_download_url.*DoL-ModLoader.*\.zip" | 
+        cut -d '"' -f 4 | 
+        xargs curl -L -o modloader.zip
+        unzip -q modloader.zip -d apps
+        rm modloader.zip
+        find apps -name "*.html" -exec mv {} apps/index.html \;
+
+    - name: Download Mods
+      run: python generate_modlist.py
+
+    - name: Copy local mods
+      run: |
+        mkdir -p apps/mods
+        cp -r mods/* apps/mods/
+
+    - name: Generate mod list
+      run: |
+        echo "[" > apps/modList.json
+        find apps/mods -name "*.mod.zip" -printf '"%p",\n' >> apps/modList.json
+        sed -i '$ s/,$//' apps/modList.json
+        echo "]" >> apps/modList.json
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+    - name: Login to GHCR
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
