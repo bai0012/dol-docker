@@ -40,6 +40,8 @@ jobs:
 
     - name: Download Mods
       run: python generate_modlist.py
+      env:
+        ACTIONS_STEP_DEBUG: true
 
     - name: Copy local mods
       run: |

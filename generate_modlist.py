@@ -2,41 +2,35 @@ import os
 import csv
 import requests
 from pathlib import Path
+from urllib.parse import urlparse
 
-def download_mods():
-    mod_dir = Path("apps/mods")
-    mod_dir.mkdir(parents=True, exist_ok=True)
-    
+def download_github_mods():
+    """处理GitHub仓库模组"""
     with open('mods.csv') as f:
         reader = csv.reader(f)
         for row_number, row in enumerate(reader, 1):
-            # 格式校验
             if len(row) < 2:
-                print(f"Row {row_number} 格式错误，已跳过: {row}")
+                print(f"[GitHub] 第{row_number}行格式错误，已跳过: {row}")
                 continue
                 
             repo, keyword = row[0], row[1]
-            print(f"正在处理仓库: {repo}，关键词: {keyword}")
+            print(f"\n正在处理GitHub仓库: {repo}，关键词: {keyword}")
             
             try:
-                # 转换仓库地址格式（支持两种输入格式）
                 repo_path = repo.replace("https://github.com/", "").strip("/")
                 api_url = f"https://api.github.com/repos/{repo_path}/releases/latest"
                 
-                # 添加API请求头
                 headers = {"Accept": "application/vnd.github.v3+json"}
                 response = requests.get(api_url, headers=headers)
-                response.raise_for_status()  # 检查HTTP错误
+                response.raise_for_status()
                 
                 release = response.json()
-                print(f"仓库 {repo} 最新版本: {release.get('tag_name', '未知')}")
+                print(f"版本 {release.get('tag_name', '未知')}")
                 
-                # 检查assets是否存在
                 if 'assets' not in release:
-                    print(f"仓库 {repo} 无可用资源，已跳过")
+                    print("该版本无可用资源")
                     continue
                     
-                # 查找匹配的asset
                 asset = next(
                     (a for a in release['assets'] 
                     if keyword in a['name'] and a['name'].endswith('.zip')),
@@ -44,24 +38,66 @@ def download_mods():
                 )
                 
                 if asset:
-                    print(f"找到匹配资源: {asset['name']}")
-                    download_url = asset['browser_download_url']
-                    file_path = mod_dir / asset['name']
-                    
-                    # 下载文件
-                    with requests.get(download_url, stream=True) as r:
-                        r.raise_for_status()
-                        with open(file_path, 'wb') as f:
-                            for chunk in r.iter_content(chunk_size=8192):
-                                f.write(chunk)
-                    print(f"成功下载: {asset['name']}")
+                    download_file(asset['browser_download_url'], asset['name'])
                 else:
-                    print(f"未找到匹配关键词 {keyword} 的zip文件")
+                    print(f"未找到匹配文件")
                     
-            except requests.exceptions.RequestException as e:
-                print(f"请求失败: {str(e)}")
             except Exception as e:
-                print(f"处理异常: {str(e)}")
+                print(f"处理失败: {str(e)}")
+
+def download_direct_mods():
+    """处理直链模组"""
+    if not Path('direct_mods.csv').exists():
+        return
+        
+    with open('direct_mods.csv') as f:
+        reader = csv.reader(f)
+        for row_number, row in enumerate(reader, 1):
+            if len(row) < 1 or not row[0].startswith('http'):
+                print(f"[直链] 第{row_number}行无效链接，已跳过: {row}")
+                continue
+                
+            url = row[0].strip()
+            print(f"\n正在处理直链: {url}")
+            
+            try:
+                # 从URL提取文件名
+                parsed = urlparse(url)
+                filename = os.path.basename(parsed.path)
+                if not filename:
+                    filename = f"mod_{row_number}.zip"
+                    
+                download_file(url, filename)
+                
+            except Exception as e:
+                print(f"下载失败: {str(e)}")
+
+def download_file(url, filename):
+    """通用下载函数"""
+    mod_dir = Path("apps/mods")
+    mod_dir.mkdir(parents=True, exist_ok=True)
+    
+    file_path = mod_dir / filename
+    if file_path.exists():
+        print(f"文件已存在，跳过下载: {filename}")
+        return
+        
+    print(f"开始下载: {filename}")
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(file_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+    print(f"下载完成: {filename}")
 
 if __name__ == "__main__":
-    download_mods()
+    # 创建必要目录
+    Path("apps/mods").mkdir(parents=True, exist_ok=True)
+    
+    # 执行两种下载方式
+    if Path('mods.csv').exists():
+        download_github_mods()
+    else:
+        print("未找到mods.csv，跳过GitHub模组下载")
+        
+    download_direct_mods()
