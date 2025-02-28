@@ -51,7 +51,7 @@ jobs:
     - name: Generate mod list
       run: |
         echo "[" > apps/modList.json
-        (cd apps && find mods -name "*.mod.zip" -printf '"./%p",\n' >> modList.json)
+        (cd apps && find mods -name "*.zip" -printf '"./%p",\n' >> modList.json)
         sed -i '$ s/,$//' apps/modList.json
         echo "]" >> apps/modList.json
     
