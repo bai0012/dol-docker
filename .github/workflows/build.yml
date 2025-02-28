@@ -12,7 +12,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: selfhosted
 
     steps:
     - name: Checkout
@@ -30,8 +30,8 @@ jobs:
     - name: Download ModLoader
       run: |
         mkdir -p apps
-        curl -s https://api.github.com/repos/Lyoko-Jeremie/DoLModLoaderBuild/releases/latest | 
-        grep "browser_download_url.*DoL-ModLoader.*\.zip" | 
+        curl -s https://api.github.com/repos/DoL-Lyra/Lyra/releases/latest | 
+        grep "browser_download_url.*besc-csd-hikari.*\.zip" | 
         cut -d '"' -f 4 | 
         xargs curl -L -o modloader.zip
         unzip -q modloader.zip -d apps
