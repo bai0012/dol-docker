@@ -48,12 +48,29 @@ jobs:
         mkdir -p apps/mods
         cp -r mods/* apps/mods/
 
-    - name: Generate mod list
-      run: |
-        echo "[" > apps/modList.json
-        (cd apps && find mods -name "*.zip" -printf '"./%p",\n' >> modList.json)
-        sed -i '$ s/,$//' apps/modList.json
-        echo "]" >> apps/modList.json
+# build.yml 的修改部分
+
+  - name: Generate mod list
+    run: |
+      echo "[" > apps/modList.json
+      # 按 mod_order.txt 顺序添加CSV中的Mod
+      if [ -f mod_order.txt ]; then
+        while IFS= read -r filename; do
+          if [ -f "apps/mods/$filename" ]; then
+            echo "\"./mods/$filename\"," >> apps/modList.json
+          else
+            echo "警告：文件 apps/mods/$filename 不存在，跳过"
+          fi
+        done < mod_order.txt
+      fi
+      # 添加本地复制的Mod，按文件名排序
+      (cd apps/mods && find . -name "*.zip" -printf '%P\n' | sort | while read filename; do
+        if [ ! -f ../../mod_order.txt ] || ! grep -qxF "$filename" ../../mod_order.txt; then
+          echo "\"./mods/$filename\"," >> ../../apps/modList.json
+        fi
+      done)
+      sed -i '$ s/,$//' apps/modList.json
+      echo "]" >> apps/modList.json
     
     - name: Debug file structure
       run: |
