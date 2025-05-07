@@ -1,7 +1,7 @@
 # DoL Docker Auto-Deploy
 
 [![Build and Deploy](https://github.com/bai0012/dol-docker/actions/workflows/build.yml/badge.svg)](https://github.com/bai0012/dol-docker/actions/workflows/build.yml)
-[![Docker Image](https://img.shields.io/badge/dynamic/json?url=https://github.com/bai0012/dol-docker/pkgs/container//dol-docker&label=Docker%20Image&query=$.name&color=blue)](https://github.com/bai0012/dol-docker/pkgs/container/dol-docker)
+[![Docker Image](https://img.shields.io/badge/dynamic/json?url=https://github.com/bai0012/dol-docker/pkgs/container/dol-docker&label=Docker%20Image&query=$.name&color=blue)](https://github.com/bai0012/dol-docker/pkgs/container/dol-docker)
 
 Automated deployment system for DoL ModLoader with modular extension support, featuring GitHub Actions CI/CD and Docker packaging.
 
@@ -40,8 +40,8 @@ Base on [Lyra Repack](https://github.com/DoL-Lyra/Lyra)
 
 1. **Clone Repository**
    ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+   git clone https://github.com/bai0012/dol-docker
+   cd dol-docker
    ```
 
 2. **Configure Mod Sources**
@@ -82,7 +82,7 @@ docker run -d \
   -p 8443:8443 \
   -v /path/to/ssl:/etc/nginx/ssl \
   -v /path/to/auth:/etc/nginx/auth \
-  ghcr.io/your-username/your-repo:latest
+  ghcr.io/bai0012/dol-docker:main
 ```
 
 ### Runtime Requirements
